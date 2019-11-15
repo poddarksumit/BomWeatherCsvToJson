@@ -1,0 +1,23 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BomWeatherCsvToJson", "BomWeatherCsvToJson\BomWeatherCsvToJson.csproj", "{2EC44DC4-C4A7-4D4E-BAB8-BF78898FF17E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BomWeatherCsvToJsonTests", "BomWeatherCsvToJsonTests\BomWeatherCsvToJsonTests.csproj", "{D86996A0-43E7-4319-8732-2F3C65F27606}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2EC44DC4-C4A7-4D4E-BAB8-BF78898FF17E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EC44DC4-C4A7-4D4E-BAB8-BF78898FF17E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EC44DC4-C4A7-4D4E-BAB8-BF78898FF17E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EC44DC4-C4A7-4D4E-BAB8-BF78898FF17E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D86996A0-43E7-4319-8732-2F3C65F27606}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D86996A0-43E7-4319-8732-2F3C65F27606}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D86996A0-43E7-4319-8732-2F3C65F27606}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D86996A0-43E7-4319-8732-2F3C65F27606}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
