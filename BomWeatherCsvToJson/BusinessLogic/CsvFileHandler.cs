@@ -7,8 +7,16 @@ using CsvHelper;
 
 namespace BomWeatherCsvToJson.BusinessLogic
 {
+    /// <summary>
+    /// CSV Handler clas.
+    /// </summary>
     public class CsvFileHandler : ICsvFileHandler
     {
+        /// <summary>
+        /// Method to read CSV file and return data in List.
+        /// </summary>
+        /// <param name="filePath">Path of the CSV file.</param>
+        /// <returns>List of data in CSV file.</returns>
         public List<WeatherData> ReadCsvFile(string filePath)
         {
             List<WeatherData> records = new List<WeatherData>();

@@ -1,10 +1,5 @@
-﻿using BomWeatherCsvToJson.Extensions;
-using InputData = BomWeatherCsvToJson.Model.Input;
-using BomWeatherCsvToJson.Model.Output;
-using BomWeatherCsvToJson.BusinessLogic;
+﻿using BomWeatherCsvToJson.BusinessLogic;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using BomWeatherCsvToJson.BusinessLogic.Interface;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -17,20 +12,36 @@ namespace BomWeatherCsvToJson
     {
         static void Main(string[] args)
         {
+            #region Configure services
             ServiceProvider serviceProvider = ConfigureSerivces();
+            #endregion
 
+            #region Get CSV file path
             Console.WriteLine("--- Welcome to BOM weather CSV data to JSON ---");
             Console.Write("Please add the location of the file - ");
             string csvDataLocation = Console.ReadLine();
-
+            #endregion
             // /Users/sumitpoddar/Desktop/IDCJAC0009_066062_1800/IDCJAC0009_066062_1800_Data.csv
-
+            #region Process CSV file to JSON.
             ProcessCsvToJson processCsvToJson = serviceProvider.GetService<ProcessCsvToJson>();
-            processCsvToJson.Process("/Users/sumitpoddar/Desktop/IDCJAC0009_066062_1800/IDCJAC0009_066062_1800_Data.csv");
+            bool processedStatus = processCsvToJson.Process(csvDataLocation);
+            #endregion
 
-            Console.WriteLine($"Location of the file is {processCsvToJson.OutputFilePath}");
+            if (processedStatus)
+            {
+                Console.WriteLine($"Location of the weather JSON feed is {processCsvToJson.OutputFilePath}");
+            }
+            else
+            {
+                Console.WriteLine($"JSON feed could not be generated because of some error (mentioned above).");
+            }
+            Console.WriteLine($"--- Thanks for using the CSV-JSON converter. ---");
         }
 
+        /// <summary>
+        /// Method to configure serices, config files.
+        /// </summary>
+        /// <returns>Configured instance of <see cref="ServiceProvider"/></returns>
         private static ServiceProvider ConfigureSerivces()
         {
             var builder = new ConfigurationBuilder()

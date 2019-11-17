@@ -5,7 +5,6 @@ using System.Linq;
 using BomWeatherCsvToJson.BusinessLogic.Interface;
 using BomWeatherCsvToJson.Config;
 using BomWeatherCsvToJson.Extensions;
-using BomWeatherCsvToJson.Model.Input;
 using BomWeatherCsvToJson.Model.Output;
 
 namespace BomWeatherCsvToJson.BusinessLogic
@@ -33,15 +32,17 @@ namespace BomWeatherCsvToJson.BusinessLogic
         public string OutputFilePath { get; set; }
 
         /// <summary>
-        /// JSON object of weather data
-        /// </summary>
-        private WeatherDataJson WeatherDataJson { get; set; }
-
-        /// <summary>
         /// Configs
         /// </summary>
         private Settings Config { get; set; }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="filePathValidator">Instance of path validator handler.</param>
+        /// <param name="csvFileHandler">Instance of csv file reader handler.</param>
+        /// <param name="fileWriterHandler">Instance of file writing handler.</param>
+        /// <param name="settings">Instance of config settings.</param>
         public ProcessCsvToJson(IFilePathValidator filePathValidator, ICsvFileHandler csvFileHandler, IFileWriterHandler fileWriterHandler, Settings settings)
         {
             FilePathValidator = filePathValidator;
@@ -50,39 +51,57 @@ namespace BomWeatherCsvToJson.BusinessLogic
             Config = settings;
         }
 
+        /// <summary>
+        /// Main method to process the file path.
+        /// </summary>
+        /// <param name="inputFilePath">Input path of CSV to be processed.</param>
+        /// <returns>Bool, indicating wheather the operation is successful or not.</returns>
         public bool Process(string inputFilePath)
         {
             bool isProcessed = false;
 
-            // Validate the path is valid before proceeding.
-            if (FilePathValidator.IsFilePathValid(inputFilePath))
+            try
             {
-                var weatherRecords = CsvFileHandler.ReadCsvFile(inputFilePath);
-                if (weatherRecords.Any())
+                // Validate the path is valid before proceeding.
+                if (FilePathValidator.IsFilePathValid(inputFilePath))
                 {
-                    // Process CSV records and update WeatherDataJson object
-                    ProcessWeatherRecords(weatherRecords);
-                    // Extract json object to json file
-                    OutputFilePath = String.Format(Config.OutputFilePath, DateTime.Now.ToString("yyyyMMddTHH:mm:ss"));
-                    FileWriterHandler.ExportJsonInFile(OutputFilePath, WeatherDataJson);
-                    isProcessed = true;
+                    var weatherRecords = CsvFileHandler.ReadCsvFile(inputFilePath);
+                    if (weatherRecords.Any())
+                    {
+                        // Process CSV records and update WeatherDataJson object
+                        WeatherDataJson weatherDataJson = ProcessWeatherRecords(weatherRecords);
+                        // Extract json object to json file
+                        OutputFilePath = string.Format(Config.OutputFilePath, DateTime.Now.ToString("yyyyMMddTHH:mm:ss"));
+                        FileWriterHandler.ExportJsonInFile(OutputFilePath, weatherDataJson);
+
+                        isProcessed = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("No data available to process in the CSV file.");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("No data available to process in the CSV file.");
-                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine($"Some exception occurred while processing the request: {e.Message} at {e.StackTrace}");
             }
 
             return isProcessed;
         }
 
-        private void ProcessWeatherRecords(List<Model.Input.WeatherData> weatherRecords)
+        /// <summary>
+        /// Method to process weather records.
+        /// </summary>
+        /// <param name="weatherRecords">List of weather data to process.</param>
+        /// <returns>Processed data.</returns>
+        public WeatherDataJson ProcessWeatherRecords(List<Model.Input.WeatherData> weatherRecords)
         {
             int initialYear = weatherRecords.First().Year;
 
-            WeatherDataJson = new WeatherDataJson
+            WeatherDataJson weatherDataJson = new WeatherDataJson
             {
-                WeatherData = new Model.Output.WeatherData()
+                WeatherData = new WeatherData()
             };
 
             while (initialYear >= weatherRecords.Last().Year)
@@ -96,12 +115,19 @@ namespace BomWeatherCsvToJson.BusinessLogic
                     {
                         WeatherDataForMonth = BuildMonthlyData(recordsForYear)
                     };
-                    WeatherDataJson.WeatherData.WeatherDataForYear.Add(yearlyWeatherData);
+                    weatherDataJson.WeatherData.WeatherDataForYear.Add(yearlyWeatherData);
                 }
                 initialYear--;
             }
+
+            return weatherDataJson;
         }
 
+        /// <summary>
+        /// Method to build monthly data.
+        /// </summary>
+        /// <param name="recordsForYear">List of weather data to process.</param>
+        /// <returns>Processed data.</returns>
         private List<MonthlyWeatherData> BuildMonthlyData(List<Model.Input.WeatherData> recordsForYear)
         {
             List<MonthlyWeatherData> monthlyWeatherDta = new List<MonthlyWeatherData>();
@@ -136,7 +162,12 @@ namespace BomWeatherCsvToJson.BusinessLogic
             return monthlyWeatherDta;
         }
 
-        private static YearlyWeatherData BuildYearlyData(List<Model.Input.WeatherData> recordsForYear)
+        /// <summary>
+        /// Method to build yearly data
+        /// </summary>
+        /// <param name="recordsForYear">List of weather data to process.</param>
+        /// <returns>Processed data.</returns>
+        public YearlyWeatherData BuildYearlyData(List<Model.Input.WeatherData> recordsForYear)
         {
             YearlyWeatherData yearlyWeatherData = new YearlyWeatherData
             {
@@ -149,13 +180,18 @@ namespace BomWeatherCsvToJson.BusinessLogic
             return yearlyWeatherData;
         }
 
-        public static void SetBaseWeatherData(List<Model.Input.WeatherData> inputWeatherData, BaseWeatherData outputWeatherData)
+        /// <summary>
+        /// Method to set the basic weather data across, yearly and monthly object.
+        /// </summary>
+        /// <param name="inputWeatherData">List of weather data.</param>
+        /// <param name="outputWeatherData">Calculated weather data.</param>
+        public void SetBaseWeatherData(List<Model.Input.WeatherData> inputWeatherData, BaseWeatherData outputWeatherData)
         {
             outputWeatherData.FirstRecordedDate = inputWeatherData.First(x => x.RainfallAmount.HasValue).FormatDate();
             outputWeatherData.LastRecordedDate = inputWeatherData.Last(x => x.RainfallAmount.HasValue).FormatDate();
             outputWeatherData.TotalRainfall = inputWeatherData.Sum(x => x.RainfallAmount).ToString();
-            outputWeatherData.DaysWithRainfall = inputWeatherData.Where(x => x.RainfallAmount.HasValue && x.RainfallAmount > 0).Count().ToString();
-            outputWeatherData.DaysWithNoRainfall = inputWeatherData.Where(x => !x.RainfallAmount.HasValue || x.RainfallAmount == 0).Count().ToString();
+            outputWeatherData.DaysWithRainfall = inputWeatherData.Count(x => x.RainfallAmount.HasValue && x.RainfallAmount > 0).ToString();
+            outputWeatherData.DaysWithNoRainfall = inputWeatherData.Count(x => !x.RainfallAmount.HasValue || x.RainfallAmount == 0).ToString();
 
             if (outputWeatherData.TotalRainfall.AsDecimal() > 0 && outputWeatherData.DaysWithRainfall.AsInt() > 0)
             {
