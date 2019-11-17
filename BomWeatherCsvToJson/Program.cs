@@ -21,7 +21,7 @@ namespace BomWeatherCsvToJson
             Console.Write("Please add the location of the file - ");
             string csvDataLocation = Console.ReadLine();
             #endregion
-            // /Users/sumitpoddar/Desktop/IDCJAC0009_066062_1800/IDCJAC0009_066062_1800_Data.csv
+
             #region Process CSV file to JSON.
             ProcessCsvToJson processCsvToJson = serviceProvider.GetService<ProcessCsvToJson>();
             bool processedStatus = processCsvToJson.Process(csvDataLocation);

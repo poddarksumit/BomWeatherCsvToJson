@@ -37,6 +37,11 @@ namespace BomWeatherCsvToJson.BusinessLogic
         private Settings Config { get; set; }
 
         /// <summary>
+        /// Weather data json object.
+        /// </summary>
+        public WeatherDataJson WeatherDataJson { get; set; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="filePathValidator">Instance of path validator handler.</param>
@@ -69,10 +74,10 @@ namespace BomWeatherCsvToJson.BusinessLogic
                     if (weatherRecords.Any())
                     {
                         // Process CSV records and update WeatherDataJson object
-                        WeatherDataJson weatherDataJson = ProcessWeatherRecords(weatherRecords);
+                        ProcessWeatherRecords(weatherRecords);
                         // Extract json object to json file
                         OutputFilePath = string.Format(Config.OutputFilePath, DateTime.Now.ToString("yyyyMMddTHH:mm:ss"));
-                        FileWriterHandler.ExportJsonInFile(OutputFilePath, weatherDataJson);
+                        FileWriterHandler.ExportJsonInFile(OutputFilePath, WeatherDataJson);
 
                         isProcessed = true;
                     }
@@ -95,18 +100,18 @@ namespace BomWeatherCsvToJson.BusinessLogic
         /// </summary>
         /// <param name="weatherRecords">List of weather data to process.</param>
         /// <returns>Processed data.</returns>
-        public WeatherDataJson ProcessWeatherRecords(List<Model.Input.WeatherData> weatherRecords)
+        public void ProcessWeatherRecords(List<Model.Input.WeatherData> weatherRecords)
         {
             int initialYear = weatherRecords.First().Year;
 
-            WeatherDataJson weatherDataJson = new WeatherDataJson
+            WeatherDataJson = new WeatherDataJson
             {
                 WeatherData = new WeatherData()
             };
 
             while (initialYear >= weatherRecords.Last().Year)
             {
-                var recordsForYear = weatherRecords.Where(x => x.Year == initialYear).OrderBy(x => x.Month).ThenBy(x => x.Day).ToList();
+                var recordsForYear = weatherRecords.Where(x => x.Year == initialYear)?.OrderBy(x => x.Month).ThenBy(x => x.Day).ToList();
 
                 if (recordsForYear.Any())
                 {
@@ -115,12 +120,10 @@ namespace BomWeatherCsvToJson.BusinessLogic
                     {
                         WeatherDataForMonth = BuildMonthlyData(recordsForYear)
                     };
-                    weatherDataJson.WeatherData.WeatherDataForYear.Add(yearlyWeatherData);
+                    WeatherDataJson.WeatherData.WeatherDataForYear.Add(yearlyWeatherData);
                 }
                 initialYear--;
             }
-
-            return weatherDataJson;
         }
 
         /// <summary>
@@ -136,28 +139,30 @@ namespace BomWeatherCsvToJson.BusinessLogic
             for (int i = 0; i < lastMonthIndex; i++)
             {
                 List<Model.Input.WeatherData> monthDataList = recordsForYear.Where(x => x.Month == i+1).ToList();
-                var monthlyWeatherData = new MonthlyWeatherData
+                if (monthDataList.Any())
                 {
-                    Month = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i + 1)
-                };
+                    var monthlyWeatherData = new MonthlyWeatherData
+                    {
+                        Month = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i + 1)
+                    };
 
-                SetBaseWeatherData(recordsForYear, monthlyWeatherData);
+                    SetBaseWeatherData(monthDataList, monthlyWeatherData);
 
-                // Set median
+                    // Set median
 
-                var medianRainfallData = monthDataList.Where(x => x.RainfallAmount.HasValue).OrderBy(x => x.RainfallAmount).ToList();
-                if (medianRainfallData.Any())
-                {
-                    monthlyWeatherData.MedianDailyRainfall = (medianRainfallData.Count % 2 != 0 ?
-                                                                    // If odd, get middle
-                                                                    medianRainfallData[medianRainfallData.Count / 2].RainfallAmount :
-                                                                    // If even, (mid + (mid -1))/2
-                                                                    (medianRainfallData[medianRainfallData.Count / 2].RainfallAmount +
-                                                                        medianRainfallData[(medianRainfallData.Count / 2) - 1].RainfallAmount) / 2).ToString();
+                    var medianRainfallData = monthDataList.Where(x => x.RainfallAmount.HasValue).OrderBy(x => x.RainfallAmount).ToList();
+                    if (medianRainfallData.Any())
+                    {
+                        monthlyWeatherData.MedianDailyRainfall = (medianRainfallData.Count % 2 != 0 ?
+                                                                        // If odd, get middle
+                                                                        medianRainfallData[medianRainfallData.Count / 2].RainfallAmount :
+                                                                        // If even, (mid + (mid -1))/2
+                                                                        (medianRainfallData[medianRainfallData.Count / 2].RainfallAmount +
+                                                                            medianRainfallData[(medianRainfallData.Count / 2) - 1].RainfallAmount) / 2).ToString();
+                    }
+                    monthlyWeatherDta.Add(monthlyWeatherData);
                 }
-                monthlyWeatherDta.Add(monthlyWeatherData);
             }
-
 
             return monthlyWeatherDta;
         }
@@ -187,8 +192,8 @@ namespace BomWeatherCsvToJson.BusinessLogic
         /// <param name="outputWeatherData">Calculated weather data.</param>
         public void SetBaseWeatherData(List<Model.Input.WeatherData> inputWeatherData, BaseWeatherData outputWeatherData)
         {
-            outputWeatherData.FirstRecordedDate = inputWeatherData.First(x => x.RainfallAmount.HasValue).FormatDate();
-            outputWeatherData.LastRecordedDate = inputWeatherData.Last(x => x.RainfallAmount.HasValue).FormatDate();
+            outputWeatherData.FirstRecordedDate = inputWeatherData.FirstOrDefault(x => x.RainfallAmount.HasValue)?.FormatDate();
+            outputWeatherData.LastRecordedDate = inputWeatherData.LastOrDefault(x => x.RainfallAmount.HasValue)?.FormatDate();
             outputWeatherData.TotalRainfall = inputWeatherData.Sum(x => x.RainfallAmount).ToString();
             outputWeatherData.DaysWithRainfall = inputWeatherData.Count(x => x.RainfallAmount.HasValue && x.RainfallAmount > 0).ToString();
             outputWeatherData.DaysWithNoRainfall = inputWeatherData.Count(x => !x.RainfallAmount.HasValue || x.RainfallAmount == 0).ToString();
