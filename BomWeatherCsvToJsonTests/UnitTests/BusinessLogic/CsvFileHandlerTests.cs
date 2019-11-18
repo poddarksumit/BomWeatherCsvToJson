@@ -40,7 +40,7 @@ namespace BomWeatherCsvToJsonTests.UnitTests.BusinessLogic
             var records = CsvFileHandler.ReadCsvFile("SampleInputFile.csv");
             Assert.NotNull(records);
             Assert.True(records.Any());
-            Assert.AreEqual(24, records.Count());
+            Assert.AreEqual(25, records.Count());
         }
 
         [Test]
