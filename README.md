@@ -52,7 +52,7 @@ public string BomStationNumber { get; set; }
  ### How to run
  
 - Once the code is downloaded, please restore the packages (if not done automatically) and then rebuild the solution.
-- Upon running the solution a CMD window will prompt for the path of the location. You can provide the CSV file added to the project i.e  ../../../Model/Output/Json/IDCJAC0009_066062_1800_Data.csv
+- Upon running the solution a CMD window will prompt for the path of the location. You can provide the CSV file added to the project i.e  ../../../Model/Input/IDCJAC0009_066062_1800_Data.csv
 - Once the CSV file is processed, the JSON feed will be generated at the location mentioned in the config file which will be based on the DataTime (eg /Model/Output/Json/BomJsonFeed-20191117T17:56:24.json)
 - The feed generated is intended to be:
   - in JSON intented format
